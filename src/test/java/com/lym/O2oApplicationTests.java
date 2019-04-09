@@ -1,4 +1,4 @@
-package com.lym.o2o;
+package com.lym;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lym.dao.ShopDao">
+
+	<resultMap id="shopMap" type="com.lym.entity.Shop">
+		<id column="shop_id" property="shopId" />
+		<result column="shop_name" property="shopName" />
+		<result column="shop_desc" property="shopDesc" />
+		<result column="shop_addr" property="shopAddr" />
+		<result column="phone" property="phone" />
+		<result column="shop_img" property="shopImg" />
+		<result column="priority" property="priority" />
+		<result column="create_time" property="createTime" />
+		<result column="last_edit_time" property="lastEditTime" />
+		<result column="enable_status" property="enableStatus" />
+		<result column="advice" property="advice" />
+		<association property="area" column="area_id"
+			select="queryAreaByAreaId"></association>
+		<association property="shopCategory"
+			column="shop_category_id" select="queryShopCategoryByShopCategoryId"></association>
+		<association property="owner" column="user_id"
+			select="queryPersonInfoById"></association>
+	</resultMap>
+
+	<!-- 关联查询====start -->
+	<select id="queryAreaByAreaId" resultType="com.lym.entity.Area">
+		SELECT
+		area_id,
+		area_name,
+		priority,
+		create_time,
+		last_edit_time
+		FROM
+		tb_area
+		WHERE
+		area_id=#{area}
+	</select>
+
+	<select id="queryShopCategoryByShopCategoryId"
+		resultType="com.lym.entity.ShopCategory">
+		SELECT
+		shop_category_id,
+		shop_category_name,
+		shop_category_desc,
+		shop_category_img,
+		priority,
+		create_time,
+		last_edit_time,
+		parent_id
+		FROM
+		tb_shop_category
+		WHERE shop_category_id =
+		#{shopCategory}
+	</select>
+
+	<select id="queryPersonInfoById"
+		resultType="com.lym.entity.PersonInfo">
+		SELECT
+		user_id,name,profile_img,email,gender,enable_status,user_type,create_time,last_edit_time
+		FROM tb_person_info
+		WHERE user_id = #{owner}
+	</select>
+
+	<!-- 关联查询====end -->
+
+    <select id="queryShopList" resultMap="shopMap">
+        SELECT
+        s.shop_id,
+        s.shop_name,
+        s.shop_desc,
+        s.shop_addr,
+        s.phone,
+        s.shop_img,
+        s.priority,
+        s.create_time,
+        s.last_edit_time,
+        s.enable_status,
+        s.advice,
+        s.shop_category_id,
+        s.area_id
+        FROM
+        tb_shop s
+        <where>
+            1=1
+            <if test="shopCondition.shopCategory!=null and shopCondition.shopCategory.shopCategoryId!=null">
+                and shop_category_id=#{shopCondition.shopCategory.shopCategoryId}
+            </if>
+			<if test="shopCondition.shopCategory!=null and shopCondition.shopCategory.parent!=null
+			 and shopCondition.shopCategory.parent.shopCategoryId!=null">
+				and s.shop_category_id in
+				(SELECT shop_category_id FROM tb_shop_category WHERE parent_id = #{shopCondition.shopCategory.parent.shopCategoryId})
+			</if>
+            <if test="shopCondition.area!=null and shopCondition.area.areaId!=null">
+                and area_id = #{shopCondition.area.areaId}
+            </if>
+            <if test="shopCondition.shopName!=null">
+                and shop_name like CONCAT('%',#{shopCondition.shopName},'%')
+            </if>
+            <if test="shopCondition.enableStatus!=null">
+                and enable_status = #{shopCondition.enableStatus}
+            </if>
+            <if test="shopCondition.owner!=null and shopCondition.owner.userId!=null">
+                and owner_id = #{shopCondition.owner.userId}
+            </if>
+        </where>
+        ORDER BY
+        priority DESC
+        LIMIT #{rowIndex},#{pageSize}
+    </select>
+
+    <select id="queryShopCount" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        FROM
+        tb_shop s
+        <where>
+            1=1
+            <if test="shopCondition.shopCategory!=null and shopCondition.shopCategory.shopCategoryId!=null">
+                and shop_category_id=#{shopCondition.shopCategory.shopCategoryId}
+            </if>
+            <if test="shopCondition.area!=null and shopCondition.area.areaId!=null">
+                and area_id = #{shopCondition.area.areaId}
+            </if>
+			<if test="shopCondition.shopCategory!=null and shopCondition.shopCategory.parent!=null
+			 and shopCondition.shopCategory.parent.shopCategoryId!=null">
+				and s.shop_category_id in
+				(SELECT shop_category_id FROM tb_shop_category WHERE parent_id = #{shopCondition.shopCategory.parent.shopCategoryId})
+			</if>
+            <if test="shopCondition.shopName!=null">
+                and shop_name like CONCAT('%',#{shopCondition.shopName},'%')
+            </if>
+            <if test="shopCondition.enableStatus!=null">
+                and enable_status = #{shopCondition.enableStatus}
+            </if>
+            <if test="shopCondition.owner!=null and shopCondition.owner.userId!=null">
+                and owner_id = #{shopCondition.owner.userId}
+            </if>
+        </where>
+
+    </select>
+
+	<insert id="insertShop" useGeneratedKeys="true"
+		keyColumn="shop_id" keyProperty="shopId">
+		INSERT INTO
+		tb_shop (owner_id, area_id,
+		shop_category_id, shop_name, shop_desc,
+		shop_addr, phone, shop_img,
+		priority, create_time, last_edit_time,
+		enable_status, advice)
+		VALUES
+		(#{owner.userId}, #{area.areaId}, #{shopCategory.shopCategoryId},
+		#{shopName},
+		#{shopDesc}, #{shopAddr},
+		#{phone}, #{shopImg},
+		#{priority}, #{createTime}, #{lastEditTime},
+		#{enableStatus},
+		#{advice})
+	</insert>
+
+	<update id="updateShop" parameterType="com.lym.entity.Shop">
+		UPDATE tb_shop
+		<set>
+			<if test="shopName!=null">shop_name=#{shopName},</if>
+			<if test="shopDesc!=null">shop_desc=#{shopDesc},</if>
+			<if test="shopAddr!=null">shop_addr=#{shopAddr},</if>
+			<if test="phone!=null">phone=#{phone},</if>
+			<if test="shopImg!=null">shop_img=#{shopImg},</if>
+			<if test="priority!=null">priority=#{priority},</if>
+			<if test="createTime!=null">create_time=#{createTime},</if>
+			<if test="lastEditTime!=null">last_edit_time=#{lastEditTime},</if>
+			<if test="enableStatus!=null">enable_status=#{enableStatus},</if>
+			<if test="advice!=null">advice=#{advice},</if>
+			<if test="shopCategory!=null">shop_category_id=#{shopCategory.shopCategoryId},</if>
+			<if test="area!=null">area_id=#{area.areaId}</if>
+		</set>
+		where shop_id=#{shopId}
+	</update>
+
+	<select id="queryByShopId" resultMap="shopMap" parameterType="Long">
+		SELECT
+		s.shop_id,
+		s.shop_name,
+		s.shop_desc,
+		s.shop_addr,
+		s.phone,
+		s.shop_img,
+		s.priority,
+		s.create_time,
+		s.last_edit_time,
+		s.enable_status,
+		s.advice,
+		s.shop_category_id,
+		s.area_id
+		FROM
+		tb_shop s
+		WHERE
+		s.shop_id = #{shopId}
+	</select>
+</mapper>

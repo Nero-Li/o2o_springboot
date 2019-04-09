@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lym.dao.ProductDao">
+
+    <resultMap id="productMap" type="com.lym.entity.Product">
+        <id column="product_id" property="productId"/>
+        <result column="product_name" property="productName"/>
+        <result column="product_desc" property="productDesc"/>
+        <result column="normal_price" property="normalPrice"/>
+        <result column="promotion_price" property="promotionPrice"/>
+        <result column="priority" property="priority"/>
+        <result column="create_time" property="createTime"/>
+        <result column="last_edit_time" property="lastEditTime"/>
+        <result column="enable_status" property="enableStatus"/>
+        <result column="img_addr" property="imgAddr"/>
+        <result column="point" property="point"/>
+        <association property="shop" column="shop_id" select="queryShopId" javaType="com.lym.entity.Shop"/>
+        <association property="productCategory" column="product_category_id" select="queryProductCategoryId"/>
+        <collection property="productImgList" column="product_id" ofType="com.lym.entity.ProductImg"
+                    select="queryProductImgList">
+        </collection>
+    </resultMap>
+
+    <sql id="baseSql">product_id,product_name,product_desc,normal_price,promotion_price,priority,create_time,last_edit_time,
+                      enable_status,img_addr,point</sql>
+
+    <!-- association query start -->
+    <select id="queryShopId" resultType="com.lym.entity.Shop">
+        SELECT shop_id,owner_id,shop_name FROM tb_shop WHERE shop_id = #{shop}
+    </select>
+    <select id="queryProductCategoryId" resultType="com.lym.entity.ProductCategory">
+        SELECT product_category_id,product_category_name FROM tb_product_category WHERE product_category_id = #{productCategory}
+    </select>
+    <!-- association query end -->
+
+    <!-- collection query start -->
+    <select id="queryProductImgList" resultType="com.lym.entity.ProductImg">
+      SELECT product_img_id,img_addr,product_id FROM tb_product_img WHERE product_id = #{productImgList}
+    </select>
+    <!-- collection query end -->
+
+    <select id="queryProductList" resultType="com.lym.entity.Product">
+        SELECT
+        <include refid="baseSql"/>
+        FROM tb_product
+        <where>
+            1=1
+            <if test="productCondition.shop!=null and productCondition.shop.shopId!=null">
+                AND shop_id = #{productCondition.shop.shopId}
+            </if>
+            <if test="productCondition.productCategory!=null and productCondition.productCategory.productCategoryId!=null">
+                AND product_category_id = #{productCondition.productCategory.productCategoryId}
+            </if>
+            <!-- 写like语句的时候 一般都会写成 like '% %' 在mybatis里面写就是应该是 like '%${name} %' 而不是
+            '%#{name} %' ${name} 是不带单引号的，而#{name} 是带单引号的 -->
+            <if test="productCondition.productName!=null">
+                AND product_name LIKE '%${productCondition.productName}%'
+            </if>
+            <if test="productCondition.enableStatus!=null">
+                AND enable_status = #{productCondition.enableStatus}
+            </if>
+        </where>
+        ORDER BY
+        priority DESC
+        LIMIT #{rowIndex},#{pageSize};
+    </select>
+
+    <update id="updateProduct" parameterType="com.lym.entity.Product">
+        UPDATE tb_product
+        <set>
+            <if test="productName!=null">product_name=#{productName},</if>
+            <if test="productDesc!=null">product_desc=#{productDesc},</if>
+            <if test="imgAddr!=null">img_addr=#{imgAddr},</if>
+            <if test="normalPrice!=null">normal_price=#{normalPrice},</if>
+            <if test="promotionPrice!=null">promotion_price=#{promotionPrice},</if>
+            <if test="priority!=null">priority=#{priority},</if>
+            <if test="lastEditTime!=null">last_edit_time=#{lastEditTime},</if>
+            <if test="enableStatus!=null">enable_status=#{enableStatus},</if>
+            <if test="point!=null">point=#{point},</if>
+            <if test="productCategory!=null and productCategory.productCategoryId!=null">
+                product_category_id = #{productCategory.productCategoryId}
+            </if>
+        </set>
+        WHERE product_id = #{productId}
+        AND shop_id = #{shop.shopId}
+    </update>
+    <update id="updateProductCategoryToNull" parameterType="long">
+        UPDATE
+        tb_product
+        SET
+        product_category_id = null
+        WHERE product_category_id = #{productCategoryId}
+    </update>
+
+    <insert id="insertProduct" parameterType="com.lym.entity.Product"
+            useGeneratedKeys="true" keyProperty="productId" keyColumn="product_id">
+    INSERT INTO
+    tb_product(product_name,product_desc,img_addr,
+    normal_price,promotion_price,priority,create_time,
+    last_edit_time,enable_status,product_category_id,
+    shop_id,point)
+    VALUES
+    (#{productName},#{productDesc},#{imgAddr},
+    #{normalPrice},#{promotionPrice},#{priority},#{createTime},
+    #{lastEditTime},#{enableStatus},#{productCategory.productCategoryId},
+    #{shop.shopId},#{point})
+    </insert>
+    <delete id="deleteProductById">
+        DELETE FROM tb_product WHERE product_id = #{productId}
+    </delete>
+
+    <select id="getProductById" resultMap="productMap">
+        SELECT product_id,product_name,product_desc,img_addr,normal_price,promotion_price,priority,create_time,
+        last_edit_time,enable_status,product_category_id,shop_id,point
+        FROM tb_product
+        WHERE product_id = #{productId}
+    </select>
+
+    <select id="queryProductCount" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM tb_product
+        <where>
+            1=1
+            <if test="productCondition.shop!=null and productCondition.shop.shopId!=null">
+                AND shop_id = #{productCondition.shop.shopId}
+            </if>
+            <if test="productCondition.productCategory!=null and productCondition.productCategory.productCategoryId!=null">
+                AND product_category_id = #{productCondition.productCategory.productCategoryId}
+            </if>
+            <if test="productCondition.productName!=null">
+                AND product_name LIKE '%${productCondition.productName}%'
+            </if>
+            <if test="productCondition.enableStatus!=null">
+                AND enable_status = #{productCondition.enableStatus}
+            </if>
+        </where>
+    </select>
+
+</mapper>
