@@ -12,6 +12,7 @@
 	<artifactId>o2o</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>o2o</name>
+    <packaging>war</packaging>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
@@ -41,14 +42,6 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>taglibs</groupId>
-            <artifactId>standard</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>jstl</groupId>
-            <artifactId>jstl</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>

@@ -23,7 +23,11 @@ public class ImageUtil {
     /**
      * 根据当前线程的类加载器获取资源路径
      */
-    private static String basePath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
+//    private static String basePath = Thread.currentThread().getContextClassLoader().getResource("").getPath();
+    /**
+     * 由于一些系统获取资源加载路径不正确,所以为了保证缩略图正确执行,所以把缩略图文件放在固定位置
+     */
+    private static String basePath = PathUtil.getImgBasePath();
 
     /**
      * 文件时间格式

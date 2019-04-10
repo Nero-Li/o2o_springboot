@@ -48,7 +48,8 @@ public class MvcConfiguration extends WebMvcConfigurerAdapter implements Applica
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
 //        registry.addResourceHandler("/resources/**").addResourceLocations("classpath:/resources/");
-        registry.addResourceHandler("/upload/**").addResourceLocations("file:I:\\upload\\");
+//        registry.addResourceHandler("/upload/**").addResourceLocations("file:I:\\upload\\");
+        registry.addResourceHandler("/upload/images/**").addResourceLocations("file:/Users/lym/pictures/o2o/images/");
     }
 
     /**
