@@ -1,6 +1,8 @@
 package com.lym.config;
 
 import com.google.code.kaptcha.servlet.KaptchaServlet;
+import com.lym.interceptor.ShopLoginInterceptor;
+import com.lym.interceptor.ShopPermissionInterceptor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
@@ -13,6 +15,8 @@ import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
@@ -133,5 +137,28 @@ public class MvcConfiguration extends WebMvcConfigurerAdapter implements Applica
         servlet.addInitParameter("kaptcha.textproducer.font.names",fNames);
 
         return servlet;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        String interceptPath = "/shopadmin/**";
+        //注册拦截器
+        InterceptorRegistration loginIR = registry.addInterceptor(new ShopLoginInterceptor());
+        //配置拦截器路径
+        loginIR.addPathPatterns(interceptPath);
+        //还可以注册其他的拦截器
+        InterceptorRegistration permissonIR = registry.addInterceptor(new ShopPermissionInterceptor());
+        permissonIR.addPathPatterns(interceptPath);
+        /** 配置不拦截的路径 */
+        //shoplist page
+        permissonIR.excludePathPatterns("/shopadmin/shoplist");
+        permissonIR.excludePathPatterns("/shopadmin/getshoplist");
+        //shopregister page
+        permissonIR.excludePathPatterns("/shopadmin/getshopinfo");
+        permissonIR.excludePathPatterns("/shopadmin/registershop");
+        permissonIR.excludePathPatterns("/shopadmin/shopoperation");
+        //shopmanage page
+        permissonIR.excludePathPatterns("/shopadmin/shopmanagement");
+        permissonIR.excludePathPatterns("/shopadmin/getshopmanagementinfo");
     }
 }

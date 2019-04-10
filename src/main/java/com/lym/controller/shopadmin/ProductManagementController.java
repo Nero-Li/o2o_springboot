@@ -13,6 +13,7 @@ import com.lym.service.ProductCategoryService;
 import com.lym.service.ProductService;
 import com.lym.util.CodeUtil;
 import com.lym.util.HttpServletRequestUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +25,6 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +38,7 @@ import java.util.Map;
  **/
 @Controller
 @RequestMapping(value = "/shopadmin")
+@Slf4j
 public class ProductManagementController {
 
     @Autowired
@@ -135,7 +136,25 @@ public class ProductManagementController {
         try {
             //如果CommonsMultipartResolver里面有文件
             if (commonsMultipartResolver.isMultipart(request)) {
-                handleImage(request, thumbnail, productImageList);
+                //将servlet中的request转换成spring中的MultipartHttpServletRequest(spring)
+                MultipartHttpServletRequest multipartHttpServletRequest = (MultipartHttpServletRequest) request;
+                //取出缩略图并构建ImageHolder对象,从MultipartHttpServletRequest中
+                CommonsMultipartFile thumbnailFile = (CommonsMultipartFile) multipartHttpServletRequest.getFile("thumbnail");
+                if (thumbnailFile != null) {
+                    thumbnail = new ImageHolder(thumbnailFile.getOriginalFilename(), thumbnailFile.getInputStream());
+                }
+                //取出详情图列表并构建List<ImageHolder>,最多支持六张图片
+                for (int i = 0; i < IMAGEMAXCOUNT; i++) {
+                    CommonsMultipartFile productImageFile = (CommonsMultipartFile) multipartHttpServletRequest.getFile("productImg" + i);
+                    if (null != productImageFile) {
+                        //若取出的第i个详情图片文件流不为null,则将其加入详情图片列表
+                        ImageHolder productImg = new ImageHolder(productImageFile.getOriginalFilename(), productImageFile.getInputStream());
+                        productImageList.add(productImg);
+                    } else {
+                        //若取出的第i个详情图片文件流为null,则跳出循环
+                        break;
+                    }
+                }
             }/* 上下架操作时,会走else
             else {
                 modelMap.put("success", false);
@@ -183,36 +202,6 @@ public class ProductManagementController {
         }
         return modelMap;
 
-    }
-
-    /**
-     * 处理前端传来的图片
-     *
-     * @param request
-     * @param thumbnail
-     * @param productImageList
-     * @throws IOException
-     */
-    private void handleImage(HttpServletRequest request, ImageHolder thumbnail, List<ImageHolder> productImageList) throws IOException {
-        //将servlet中的request转换成spring中的MultipartHttpServletRequest(spring)
-        MultipartHttpServletRequest multipartHttpServletRequest = (MultipartHttpServletRequest) request;
-        //取出缩略图并构建ImageHolder对象,从MultipartHttpServletRequest中
-        CommonsMultipartFile thumbnailFile = (CommonsMultipartFile) multipartHttpServletRequest.getFile("thumbnail");
-        if (thumbnail != null) {
-            thumbnail = new ImageHolder(thumbnailFile.getOriginalFilename(), thumbnailFile.getInputStream());
-        }
-        //取出详情图列表并构建List<ImageHolder>,最多支持六张图片
-        for (int i = 0; i < IMAGEMAXCOUNT; i++) {
-            CommonsMultipartFile productImageFile = (CommonsMultipartFile) multipartHttpServletRequest.getFile("productImg" + i);
-            if (null != productImageFile) {
-                //若取出的第i个详情图片文件流不为null,则将其加入详情图片列表
-                ImageHolder productImg = new ImageHolder(productImageFile.getOriginalFilename(), productImageFile.getInputStream());
-                productImageList.add(productImg);
-            } else {
-                //若取出的第i个详情图片文件流为null,则跳出循环
-                break;
-            }
-        }
     }
 
 
@@ -293,7 +282,27 @@ public class ProductManagementController {
         try {
             //若请求中存在文件流,则取出相关文件(包括详情图和缩略图)
             if (multipartResolver.isMultipart(request)) {
-                handleImage(request, imageHolder, imageHolderList);
+                //将servlet中的request转换成spring中的MultipartHttpServletRequest(spring)
+                multipartHttpServletRequest = (MultipartHttpServletRequest) request;
+                //取出缩略图并构建ImageHolder对象,从MultipartHttpServletRequest中
+                CommonsMultipartFile thumbnailFile = (CommonsMultipartFile) multipartHttpServletRequest.getFile("thumbnail");
+                if (thumbnailFile != null) {
+                    imageHolder = new ImageHolder(thumbnailFile.getOriginalFilename(), thumbnailFile.getInputStream());
+                }
+                //取出详情图列表并构建List<ImageHolder>,最多支持六张图片
+                for (int i = 0; i < IMAGEMAXCOUNT; i++) {
+                    CommonsMultipartFile productImageFile = (CommonsMultipartFile) multipartHttpServletRequest.getFile("productImg" + i);
+                    if (null != productImageFile) {
+                        //若取出的第i个详情图片文件流不为null,则将其加入详情图片列表
+                        ImageHolder productImg = new ImageHolder(productImageFile.getOriginalFilename(), productImageFile.getInputStream());
+                        imageHolderList.add(productImg);
+                    } else {
+                        //若取出的第i个详情图片文件流为null,则跳出循环
+                        break;
+                    }
+                }
+                log.info(imageHolder.getImageName());
+
             } else {
                 modelMap.put("success", false);
                 modelMap.put("errMsg", "上传图片不能为null");
