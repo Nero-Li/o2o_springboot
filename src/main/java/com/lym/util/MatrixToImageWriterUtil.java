@@ -1,9 +1,11 @@
 package com.lym.util;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.EncodeHintType;
-import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.BinaryBitmap;
+import com.google.zxing.DecodeHintType;
+import com.google.zxing.MultiFormatReader;
+import com.google.zxing.Result;
 import com.google.zxing.common.BitMatrix;
+import com.google.zxing.common.HybridBinarizer;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -51,21 +53,65 @@ public class MatrixToImageWriterUtil {
             throw new IOException("Could not write an image of format " + format);
         }
     }
+    /**
+     * 解析二维码
+     *
+     * @param file
+     *            二维码图片
+     * @return
+     * @throws Exception
+     */
+    public static String decode(File file) throws Exception {
+        BufferedImage image;
+        image = ImageIO.read(file);
+        if (image == null) {
+            return null;
+        }
+        BufferedImageLuminanceSource source = new BufferedImageLuminanceSource(
+                image);
+        BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+        Result result;
+        Hashtable<DecodeHintType, Object> hints = new Hashtable<DecodeHintType, Object>();
+        hints.put(DecodeHintType.CHARACTER_SET, "utf-8");
+        result = new MultiFormatReader().decode(bitmap, hints);
+        String resultStr = result.getText();
+        return resultStr;
+    }
 
+    /**
+     * 解析二维码
+     *
+     * @param path
+     *            二维码图片地址
+     * @return
+     * @throws Exception
+     */
+    public static String decode(String path) throws Exception {
+        return MatrixToImageWriterUtil.decode(new File(path));
+    }
 
     public static void main(String[] args) throws Exception {
-        String text = "lysb！"; // 二维码内容
-        int width = 300; // 二维码图片宽度
-        int height = 300; // 二维码图片高度
-        String format = "gif";// 二维码的图片格式
-
-        Hashtable<EncodeHintType, String> hints = new Hashtable<EncodeHintType, String>();
-        hints.put(EncodeHintType.CHARACTER_SET, "utf-8");    // 内容所使用字符集编码
-
-        BitMatrix bitMatrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, width, height, hints);
-        // 生成二维码
-        File outputFile = new File("/Users/lym/Movies" + File.separator + "new.gif");
-        MatrixToImageWriterUtil.writeToFile(bitMatrix, format, outputFile);
+        System.out.println("123");
+        String str= MatrixToImageWriterUtil.decode("C:\\Users\\lym\\Desktop" + File.separator + "BaseMatrix.png");
+        System.out.println(str);
     }
+
+
+//    public static void main(String[] args) throws Exception {
+//        String text = "lysb！"; // 二维码内容
+//        int width = 300; // 二维码图片宽度
+//        int height = 300; // 二维码图片高度
+//        String format = "jpg";// 二维码的图片格式
+//
+//        Hashtable<EncodeHintType, String> hints = new Hashtable<EncodeHintType, String>();
+//        hints.put(EncodeHintType.CHARACTER_SET, "utf-8");    // 内容所使用字符集编码
+//
+//        BitMatrix bitMatrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, width, height, hints);
+//        // 生成二维码
+//        File outputFile = new File("C:\\Users\\lym\\Desktop" + File.separator + "new.gif");
+//        MatrixToImageWriterUtil.writeToFile(bitMatrix, format, outputFile);
+//    }
+
+
 }
 
